@@ -1,0 +1,123 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2024-12-19T11:49:15+02:00",
+    "name": "owncast.online",
+    "author": "psychoalex@thevcbc.com",
+    "description": "Owncast is a self-hosted live video and web chat server for use with existing popular broadcasting software.",
+    "features": null,
+    "docker_images": {
+        "ghcr.io/pterodactyl/yolks:debian": "ghcr.io/pterodactyl/yolks:debian"
+    },
+    "file_denylist": [],
+    "startup": "./owncast -webserverport {{SERVER_PORT}} -rtmpport {{RTMP_PORT}} -streamkey {{STREAM_KEY}} -loglevel {{LOG_LEVEL}}",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"The web admin interface is available at /admin.\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\r\n\r\n# Check if server directory exists, create if not\r\nif [ ! -d /mnt/server/ ]; then\r\n    mkdir /mnt/server/\r\nfi\r\ncd /mnt/server/\r\n\r\n# Update and install dependencies\r\napt-get -y update\r\napt-get -y install curl unzip tar jq\r\n\r\n# Check if GitHub credentials are set for API calls\r\nif [ -z \"${GITHUB_USER}\" ] && [ -z \"${GITHUB_OAUTH_TOKEN}\" ]; then\r\n    echo \"Using anonymous GitHub API calls.\"\r\nelse\r\n    echo \"GitHub credentials set.\"\r\n    alias curl='curl -u ${GITHUB_USER}:${GITHUB_OAUTH_TOKEN}'\r\nfi\r\n\r\n# Get the latest release info and validate version\r\nLATEST_JSON=$(curl --silent \"https://api.github.com/repos/${GITHUB_PACKAGE}/releases/latest\")\r\nRELEASES=$(curl --silent \"https://api.github.com/repos/${GITHUB_PACKAGE}/releases\")\r\n\r\n# Check if a specific version is set\r\nif [ -z \"${VERSION}\" ] || [ \"${VERSION}\" == \"latest\" ]; then\r\n    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq -r .assets[].browser_download_url | grep -i ${MATCH})\r\nelse\r\n    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .tag_name')\r\n    if [ \"${VERSION}\" == \"${VERSION_CHECK}\" ]; then\r\n        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i ${MATCH})\r\n    else\r\n        echo \"Version not found. Defaulting to latest release.\"\r\n        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq -r .assets[].browser_download_url)\r\n    fi\r\nfi\r\n\r\n# Validate URL and download\r\nif [ -z \"${DOWNLOAD_URL}\" ]; then\r\n    echo \"Error: Download URL not found! Exiting installation.\"\r\n    exit 1\r\nfi\r\n\r\n# Download and install\r\ncurl -L ${DOWNLOAD_URL} --output ./owncast_installer.zip\r\nunzip -o -q ./owncast_installer.zip\r\nrm ./owncast_installer.zip\r\n\r\n# Installation completed successfully\r\necho \"-----------------------------------------\"\r\necho \"Installation completed. Owncast is ready.\"\r\necho \"-----------------------------------------\"",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "RTMP Port",
+            "description": "The port used to receive stream data.",
+            "env_variable": "RTMP_PORT",
+            "default_value": "8091",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "Stream/Admin Key",
+            "description": "The key used to authenticate to the web admin interface and stream.",
+            "env_variable": "STREAM_KEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:32|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Owncast Version",
+            "description": "Version of Owncast to install (e.g., \"v0.0.11\" for a specific version, or \"latest\" for the most up-to-date version).",
+            "env_variable": "VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Github Repository",
+            "description": "GitHub repository for the release (default is owncast/owncast).",
+            "env_variable": "GITHUB_PACKAGE",
+            "default_value": "owncast/owncast",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:120",
+            "field_type": "text"
+        },
+        {
+            "name": "Github File Match",
+            "description": "Identifier for the specific asset under a release for download.",
+            "env_variable": "MATCH",
+            "default_value": "linux-64bit",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Github User",
+            "description": "GitHub username for authentication (required if making numerous API calls).",
+            "env_variable": "GITHUB_USER",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Github Oauth Token",
+            "description": "GitHub OAuth token for authentication (required for numerous API calls).",
+            "env_variable": "GITHUB_OAUTH_TOKEN",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Log Level",
+            "description": "Set the level of logging for the server (e.g., debug, info, warn, error).",
+            "env_variable": "LOG_LEVEL",
+            "default_value": "info",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:debug,info,warn,error",
+            "field_type": "select",
+            "options": [
+                "debug",
+                "info",
+                "warn",
+                "error"
+            ]
+        }
+    ],
+    "resources": {
+        "cpu": 2,
+        "memory": 2048,
+        "disk": 20480
+    }
+}
