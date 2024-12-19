@@ -1,0 +1,104 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2024-12-19T00:00:00+00:00",
+    "name": "Powerful Bash Shell",
+    "author": "your-email@example.com",
+    "description": "A powerful Bash shell environment with advanced configuration, tools, and customizations.\r\n\r\nThis egg provides a versatile shell for development, automation, and server management.",
+    "features": null,
+    "docker_images": {
+        "Ubuntu 22.04": "ghcr.io/parkervcp/yolks:ubuntu_22_04",
+        "Ubuntu 20.04": "ghcr.io/parkervcp/yolks:ubuntu_20_04",
+        "Alpine 3.18": "ghcr.io/parkervcp/yolks:alpine_3_18"
+    },
+    "file_denylist": [],
+    "startup": "# Start the custom shell environment\r\nif [[ -f /home/container/start.sh ]]; then\r\n    bash /home/container/start.sh\r\nelse\r\n    bash\r\nfi",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": [\r\n        \"Bash shell is running.\"\r\n    ]\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\r\n# Setup for a powerful Bash Shell environment\r\n# Installing essential packages and tools\r\napt update -y && apt upgrade -y\r\napt install -y curl git unzip bash sudo vim htop tmux ncdu\r\n\r\n# Check if user wants to install additional tools\r\nif [[ ! -z ${ADDITIONAL_TOOLS} ]]; then\r\n    apt install -y ${ADDITIONAL_TOOLS}\r\nfi\r\n\r\n# Set up working directory\r\nmkdir -p /mnt/server\r\ncd /mnt/server\r\n\r\n# Optionally clone a GitHub repository\r\nif [[ ! -z ${GIT_ADDRESS} ]]; then\r\n    git clone ${GIT_ADDRESS} .\r\n    echo \"Cloned repository from ${GIT_ADDRESS}\";\r\n    if [[ ! -z ${GIT_BRANCH} ]]; then\r\n        git checkout ${GIT_BRANCH}\r\n    fi\r\nfi\r\n\r\n# Install specific tools if needed\r\nif [[ ! -z ${INSTALL_PYTHON} ]]; then\r\n    apt install -y python3 python3-pip\r\n    echo \"Python3 and pip installed.\"\r\nfi\r\n\r\nif [[ ! -z ${INSTALL_NODEJS} ]]; then\r\n    curl -sL https://deb.nodesource.com/setup_16.x | bash -\r\n    apt install -y nodejs\r\n    echo \"Node.js installed.\"\r\nfi\r\n\r\n# Handle custom file uploads\r\nif [[ ! -z ${USER_UPLOAD} && ${USER_UPLOAD} -eq 1 ]]; then\r\n    echo \"User uploads enabled. Handling file extraction and setup.\"\r\n    # Extract zip files if needed\r\n    if [[ -f /mnt/server/upload.zip ]]; then\r\n        unzip /mnt/server/upload.zip -d /mnt/server\r\n    fi\r\nfi\r\n\r\n# Final cleanup and confirmations\r\necho \"Installation complete.\"\r\nexit 0",
+            "container": "ubuntu:22.04",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Git Repo Address",
+            "description": "GitHub Repo to clone.\r\n\r\nI.E. https://github.com/yourname/repo_name",
+            "env_variable": "GIT_ADDRESS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Branch",
+            "description": "Branch of the Git repository to checkout.",
+            "env_variable": "GIT_BRANCH",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Additional Tools",
+            "description": "Comma-separated list of tools to install (e.g., curl, vim, htop).",
+            "env_variable": "ADDITIONAL_TOOLS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Install Python3",
+            "description": "Enable installation of Python3 and pip.",
+            "env_variable": "INSTALL_PYTHON",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Install Node.js",
+            "description": "Enable installation of Node.js.",
+            "env_variable": "INSTALL_NODEJS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "User Upload Files",
+            "description": "If you want to upload custom files for your environment.",
+            "env_variable": "USER_UPLOAD",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Update",
+            "description": "Auto-update the repository on startup when a GitHub repository is used.",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        }
+    ]
+}
