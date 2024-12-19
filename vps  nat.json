@@ -1,0 +1,62 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2023-12-19T14:03:42+01:00",
+    "name": "NAT VPS Setup with Public IP",
+    "author": "your-email@example.com",
+    "description": "An egg for hosting a NAT-based VPS that automatically retrieves the public IP of the server and configures it.",
+    "features": null,
+    "docker_images": {
+        "ghcr.io/parkervcp/yolks:rust_latest": "ghcr.io/parkervcp/yolks:rust_latest"
+    },
+    "file_denylist": [],
+    "startup": "./vps_hosting_script.sh",
+    "config": {
+        "files": "{\r\n    \"vps_config.toml\": {\r\n        \"parser\": \"ini\",\r\n        \"find\": {\r\n            \"server.bind_addr\": \"\\\"{{server.build.env.PUBLIC_IP}}:{{server.build.default.port}}\\\"\",\r\n            \"server.services.test.token\": \"\\\"{{server.build.env.TOKEN}}\\\"\",\r\n            \"server.services.test.bind_addr\": \"\\\"{{server.build.env.PUBLIC_IP}}:{{server.build.default.port}}\\\"\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": [\r\n        \"Server is now listening at \"\r\n    ]\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n\n## Get the Public IP\nPUBLIC_IP=$(curl -s http://ifconfig.me)\n\n## Download and Install the VPS Application (e.g., Rathole)\nmkdir -p /mnt/server\ncd /mnt/server\nLATEST_JSON=$(curl --silent \"https://api.github.com/repos/rapiz1/rathole/releases/latest\")\nRELEASES=$(curl --silent \"https://api.github.com/repos/rapiz1/rathole/releases\")\nARCH=$([[ \"$(uname -m)\" == \"x86_64\" ]] && echo \"amd64\" || echo \"aarch64\")\n\nif [ \"${ARCH}\" == \"aarch64\" ]; then\n    MATCH=rathole-aarch64-unknown-linux-musl.zip\nelse\n    MATCH=rathole-x86_64-unknown-linux-gnu.zip\nfi\n\nif [ -z \"${VERSION}\" ] || [ \"${VERSION}\" == \"latest\" ]; then\n    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i ${MATCH})\nelse\n    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .tag_name')\n    if [ \"${VERSION}\" == \"${VERSION_CHECK}\" ]; then\n        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i ${MATCH})\n    else\n        echo -e \"defaulting to latest release\"\n        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url)\n    fi\nfi\n\necho \"Download url: ${DOWNLOAD_URL}\"\ncurl -ssL -o rathole.zip ${DOWNLOAD_URL}\nunzip rathole.zip\nrm rathole.zip\ntouch vps_config.toml\n\n## Create vps_config.toml with Public IP and User Input\nprintf \"[server]\\nbind_addr=\\\"${PUBLIC_IP}:${SERVER_PORT}\\\"\\n\\n[server.services.test]\\ntoken=\\\"${TOKEN}\\\"\\nbind_addr=\\\"${PUBLIC_IP}:${SERVER_PORT}\\\"\" > vps_config.toml\nchmod +x rathole\n\n## Installation complete\n\necho \"-----------------------------------------\"\necho \"Installation completed. VPS running at ${PUBLIC_IP}:${SERVER_PORT}\"\necho \"-----------------------------------------\"",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Version",
+            "description": "The version of the VPS software to install (e.g., 'latest' or 'v0.1.0')",
+            "env_variable": "VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Secret",
+            "description": "A random token for secure authentication",
+            "env_variable": "TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:5|max:60",
+            "field_type": "text"
+        },
+        {
+            "name": "Server Port",
+            "description": "The port for the VPS service to bind to",
+            "env_variable": "SERVER_PORT",
+            "default_value": "12345",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:1024|max:65535",
+            "field_type": "text"
+        }
+    ]
+}
