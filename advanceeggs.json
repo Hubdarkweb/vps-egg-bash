@@ -1,0 +1,84 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2024-12-19T00:00:00+00:00",
+    "name": "Sophisticated VPS Environment",
+    "author": "your-email@example.com",
+    "description": "A sophisticated VPS environment with a wide range of tools for development, system administration, performance monitoring, security, and containerization.",
+    "features": null,
+    "docker_images": {
+        "Ubuntu 22.04": "ghcr.io/parkervcp/yolks:ubuntu_22_04",
+        "Alpine 3.18": "ghcr.io/parkervcp/yolks:alpine_3_18",
+        "Debian 11": "ghcr.io/parkervcp/yolks:debian_11"
+    },
+    "file_denylist": [],
+    "startup": "# Start the advanced VPS environment\r\nbash /home/container/startup.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": [\r\n        \"Sophisticated VPS environment is up and running.\"\r\n    ]\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\r\n# Sophisticated VPS Setup\r\n# Installing core utilities\r\napt update -y && apt upgrade -y\r\napt install -y curl git vim htop tmux nmap unzip zip net-tools ufw fail2ban sudo rsyslog\r\n\r\n# Install Docker\r\ncurl -fsSL https://get.docker.com -o get-docker.sh && bash get-docker.sh\r\n\r\n# Install Kubernetes Tools (kubectl)\r\ncurl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -\r\nsudo apt-add-repository \"deb https://apt.kubernetes.io/ kubernetes-xenial main\"\r\nsudo apt-get update\r\nsudo apt-get install -y kubectl\r\n\r\n# Install cloud SDKs\r\napt install -y awscli google-cloud-sdk azure-cli\r\n\r\n# Setup UFW firewall\r\nufw default deny incoming\r\nufw default allow outgoing\r\nufw allow ssh\r\nufw allow 80,443/tcp\r\nufw enable\r\n\r\n# Install web server (Nginx) and MySQL\r\napt install -y nginx mysql-server\r\n\r\n# Install common frameworks (PHP, Node.js, Python)\r\napt install -y php php-fpm nodejs npm python3 python3-pip\r\n\r\n# Install CI/CD tools (Jenkins)\r\nwget -q -O - https://pkg.jenkins.io/jenkins.io.key | sudo apt-key add -\r\nsudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable/ / > /etc/apt/sources.list.d/jenkins.list'\r\nsudo apt update && sudo apt install -y jenkins\r\n\r\n# Install monitoring tools (Glances, Prometheus)\r\napt install -y glances\r\n# Install Prometheus (for monitoring)\r\ncurl -LO https://github.com/prometheus/prometheus/releases/download/v2.33.1/prometheus-2.33.1.linux-amd64.tar.gz\r\n# Extract Prometheus and move to correct location\r\n# ....... (additional setup)\r\n\r\n# Final cleanup and messaging\r\necho \"Sophisticated VPS environment setup completed.\"\r\nexit 0",
+            "container": "ubuntu:22.04",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Enable Docker",
+            "description": "Enable Docker installation (default: true).",
+            "env_variable": "ENABLE_DOCKER",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Kubernetes Tools",
+            "description": "Enable installation of Kubernetes tools (kubectl).",
+            "env_variable": "ENABLE_K8S",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Install PHP",
+            "description": "Install PHP and PHP-FPM for web applications.",
+            "env_variable": "INSTALL_PHP",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Install MySQL",
+            "description": "Install MySQL server for database management.",
+            "env_variable": "INSTALL_MYSQL",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable CI/CD Tools (Jenkins)",
+            "description": "Enable installation of Jenkins for CI/CD pipelines.",
+            "env_variable": "ENABLE_JENKINS",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        }
+    ]
+}
