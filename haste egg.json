@@ -1,0 +1,55 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "name": "haste-server",
+    "author": "eggs@harryw.link",
+    "description": "Haste is an open-source pastebin software written in node.js, easily installable in any network. It can be backed by either Redis or filesystem, with a customizable adapter interface for other stores. A publicly available version can be found at hastebin.com.",
+    "features": ["Redis Support", "Customizable Port", "Environment Variables Support", "Robust Error Handling", "Dockerized Installation"],
+    "docker_images": {
+        "ghcr.io/parkervcp/yolks:nodejs_18": "ghcr.io/parkervcp/yolks:nodejs_18"
+    },
+    "file_denylist": [],
+    "startup": "npm start",
+    "config": {
+        "files": "{\r\n    \"config.js\": {\r\n        \"parser\": \"json\",\r\n        \"find\": {\r\n            \"port\": \"{{server.build.default.port}}\",\r\n            \"redis\": {\r\n                \"host\": \"{{env.REDIS_HOST}}\",\r\n                \"port\": \"{{env.REDIS_PORT}}\",\r\n                \"password\": \"{{env.REDIS_PASSWORD}}\"\r\n            }\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"listening on\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\r\n\r\nset -e\r\n\r\n# Update and install dependencies\r\napt update\r\napt install -y git curl\r\n\r\n# Create server directory and clone repo\r\nmkdir -p /mnt/server\r\ncd /mnt/server\r\n\r\ngit clone https://github.com/toptal/haste-server\r\ncd haste-server\r\nmv * /mnt/server\r\ncd ..\r\nrm -rf haste-server\r\n\r\n# Install npm dependencies\r\nnpm install\r\n\r\n# Handle Redis environment\r\nif [ ! -z \"${REDIS_HOST}\" ]; then\r\n    echo \"Configuring Redis connection...\"\r\n    cp config/redis_config.js.example config/redis_config.js\r\n    sed -i \"s/{{REDIS_HOST}}/${REDIS_HOST}/g\" config/redis_config.js\r\n    sed -i \"s/{{REDIS_PORT}}/${REDIS_PORT:-6379}/g\" config/redis_config.js\r\n    sed -i \"s/{{REDIS_PASSWORD}}/${REDIS_PASSWORD}/g\" config/redis_config.js\r\nelse\r\n    echo \"No Redis configuration found, using filesystem storage.\"\r\nfi\r\n\r\n# Clean up and finish\r\nexit 0",
+            "container": "node:18-bookworm-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "REDIS_HOST",
+            "description": "The Redis server hostname or IP address.",
+            "env_variable": "REDIS_HOST",
+            "default_value": "127.0.0.1"
+        },
+        {
+            "name": "REDIS_PORT",
+            "description": "The Redis server port.",
+            "env_variable": "REDIS_PORT",
+            "default_value": "6379"
+        },
+        {
+            "name": "REDIS_PASSWORD",
+            "description": "The Redis server password (leave blank if none).",
+            "env_variable": "REDIS_PASSWORD",
+            "default_value": ""
+        },
+        {
+            "name": "NODE_ENV",
+            "description": "The Node.js environment (production or development).",
+            "env_variable": "NODE_ENV",
+            "default_value": "production"
+        }
+    ]
+}
