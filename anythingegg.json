@@ -1,0 +1,62 @@
+{
+  "_comment": "Custom Egg for General Purpose Hosting (Web Apps, Bots, etc.)",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2024-12-19T00:00:00+0000",
+  "name": "General Purpose Hosting",
+  "author": "your-email@example.com",
+  "description": "A generic egg to host any type of service (web apps, bots, etc.) on Ubuntu, Debian, CentOS.",
+  "features": null,
+  "docker_images": {
+    "ghcr.io/parkervcp/yolks:debian": "ghcr.io/parkervcp/yolks:debian"
+  },
+  "file_denylist": [],
+  "startup": "bash /mnt/server/start.sh",
+  "config": {
+    "files": "{}",
+    "startup": "{\r\n    \"done\": \"change this text\"\r\n}",
+    "logs": "{}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\n# Generic Installation Script for Web Apps / Bots\n#\n# This script installs dependencies and starts a user-defined service.\n\n# Update system and install basic dependencies\napt update && apt install -y curl jq git\n\n# Install specific dependencies based on the type of application\n# Example: Install Node.js for a Node.js app or Python for a Python bot\n# For now, we're just installing curl, jq, and git.\n\n# Navigate to the server directory\ncd /mnt/server\n\n# This script should be customized by the user to install specific software and launch the service.\n",
+      "container": "ghcr.io/parkervcp/yolks:debian",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "SERVICE TYPE",
+      "description": "Specify the type of service to be hosted (e.g., web, bot, etc.).",
+      "env_variable": "SERVICETYPE",
+      "default_value": "web",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|max:20",
+      "field_type": "text"
+    },
+    {
+      "name": "STARTUP SCRIPT",
+      "description": "Custom startup script for the application.",
+      "env_variable": "STARTUPSCRIPT",
+      "default_value": "start.sh",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|max:100",
+      "field_type": "text"
+    },
+    {
+      "name": "APP CONFIGURATION",
+      "description": "Path to custom configuration file for the application (if any).",
+      "env_variable": "APP_CONFIG",
+      "default_value": "config.json",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "string|max:100",
+      "field_type": "text"
+    }
+  ]
+}
