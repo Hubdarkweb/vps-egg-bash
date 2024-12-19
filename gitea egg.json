@@ -1,0 +1,101 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v3",
+        "update_url": null
+    },
+    "exported_at": "2024-12-19T00:00:00+01:00",
+    "name": "Advanced Gitea",
+    "author": "mario.franze@gmail.com",
+    "description": "Gitea is a lightweight, self-hosted Git service written in Go. This version enhances security, performance, and flexibility with advanced configuration options.",
+    "features": [
+        "Automated SSL Certificate Setup",
+        "Improved SSH Configuration",
+        "Advanced Version Control",
+        "Docker Multi-Stage Build Support",
+        "Configurable Database Integration"
+    ],
+    "docker_images": {
+        "ghcr.io/parkervcp/yolks:debian": "ghcr.io/parkervcp/yolks:debian"
+    },
+    "file_denylist": [
+        "/mnt/server/data/*",
+        "/mnt/server/config/*"
+    ],
+    "startup": "./gitea web -p {{SERVER_PORT}} -c ./custom/app.ini --env GITEA_CUSTOM=/mnt/server/custom",
+    "config": {
+        "files": "{\r\n    \"custom/app.ini\": {\r\n        \"parser\": \"file\",\r\n        \"find\": {\r\n            \"DISABLE_SSH\": \"DISABLE_SSH: {{server.build.env.DISABLE_SSH}}\",\r\n            \"SSH_PORT\": \"SSH_PORT: {{server.build.env.SSH_PORT}}\",\r\n            \"DATABASE_TYPE\": \"DATABASE_TYPE: {{server.build.env.DATABASE_TYPE}}\",\r\n            \"SSL_CERT_PATH\": \"SSL_CERT_PATH: {{server.build.env.SSL_CERT_PATH}}\",\r\n            \"SSL_KEY_PATH\": \"SSL_KEY_PATH: {{server.build.env.SSL_KEY_PATH}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Listen: \"\r\n}",
+        "logs": "{\r\n    \"type\": \"json\",\r\n    \"log_level\": \"debug\"\r\n}",
+        "stop": "^^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "## Gitea Installscript - Advanced\r\n\r\n## update system\r\napt update && apt -y upgrade\r\napt -y install --no-install-recommends jq curl ca-certificates git gnupg2\r\n\r\n## Detect architecture\r\nARCH=$([[ \"$(uname -m)\" == \"x86_64\" ]] && echo \"amd64\" || echo \"arm64\")\r\nLATEST=$(curl -sSL https://dl.gitea.io/gitea/version.json | jq -r .latest.version)\r\n\r\n## Download and Install Gitea\r\nif [ -z \"${VERSION}\" ] || [ \"${VERSION}\" == \"latest\" ]; then\r\n    curl -sSL -o gitea https://dl.gitea.io/gitea/${LATEST}/gitea-${LATEST}-linux-${ARCH}\r\nelif [ \"${VERSION}\" == \"nightly\" ]; then\r\n    curl -sSL -o gitea https://dl.gitea.io/gitea/main/gitea-main-linux-${ARCH}\r\nelse\r\n    curl -sSL -o gitea https://dl.gitea.io/gitea/${VERSION}/gitea-${VERSION}-linux-${ARCH}\r\nfi\r\n\r\nchmod +x gitea\r\n\r\n## Create custom directory\r\nmkdir -p /mnt/server/custom\r\n\r\n## Generate or Update app.ini Configuration\r\nif [ -f \"/mnt/server/custom/app.ini\" ]; then\r\n    echo \"Configuration file exists. Skipping creation.\"\r\nelse\r\n    echo -e \"[server]\r\n    LOCAL_ROOT_URL = http://${SERVER_IP}:${SERVER_PORT}/\r\n    DOMAIN = ${SERVER_IP}\r\n    HTTP_PORT = ${SERVER_PORT}\r\n    ROOT_URL = http://${SERVER_IP}:${SERVER_PORT}/\r\n    DISABLE_SSH = ${DISABLE_SSH}\r\n    SSH_PORT = ${SSH_PORT}\r\n    DATABASE_TYPE = ${DATABASE_TYPE}\r\n    SSL_CERT_PATH = ${SSL_CERT_PATH}\r\n    SSL_KEY_PATH = ${SSL_KEY_PATH}\r\n    \" > /mnt/server/custom/app.ini\r\nfi\r\n\r\n## Install and Configure SSL (optional)\r\nif [ -f \"${SSL_CERT_PATH}\" ] && [ -f \"${SSL_KEY_PATH}\" ]; then\r\n    echo \"Setting up SSL Certificate...\"\r\n    cp ${SSL_CERT_PATH} /mnt/server/custom/cert.pem\r\n    cp ${SSL_KEY_PATH} /mnt/server/custom/key.pem\r\nfi\r\n\r\n## Finished\r\necho -e \"-------------------------------------------------\"\r\necho -e \"Installation completed successfully.\"\r\necho -e \"-------------------------------------------------\"",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Disable SSH",
+            "description": "Enable or disable SSH functionality.",
+            "env_variable": "DISABLE_SSH",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "SSH Port",
+            "description": "The port used for SSH operations.",
+            "env_variable": "SSH_PORT",
+            "default_value": "2020",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|integer|between:1024,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Database Type",
+            "description": "The type of database to use for Gitea. Possible values: sqlite3, mysql, postgresql.",
+            "env_variable": "DATABASE_TYPE",
+            "default_value": "sqlite3",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:sqlite3,mysql,postgresql",
+            "field_type": "text"
+        },
+        {
+            "name": "SSL Certificate Path",
+            "description": "The path to the SSL certificate file (if using SSL).",
+            "env_variable": "SSL_CERT_PATH",
+            "default_value": "/mnt/server/ssl/cert.pem",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "SSL Key Path",
+            "description": "The path to the SSL private key file (if using SSL).",
+            "env_variable": "SSL_KEY_PATH",
+            "default_value": "/mnt/server/ssl/key.pem",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Version",
+            "description": "Choose the Gitea version to install (latest, nightly, or specific version).",
+            "env_variable": "VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        }
+    ]
+}
